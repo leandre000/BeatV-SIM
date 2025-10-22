@@ -1,6 +1,6 @@
 ﻿import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider, Button, TextBox
 from matplotlib.gridspec import GridSpec
 from scipy import signal
 
@@ -58,6 +58,7 @@ class BeatSimulatorPro:
         self.update(None)
         
     def create_controls(self):
+        # Sliders
         sh, sw = 0.025, 0.22
         ax_f1 = plt.axes([0.12, 0.06, sw, sh], facecolor=COLORS["bg_panel"])
         self.slider_f1 = Slider(ax_f1, "Freq 1 (Hz)", 100, 500, valinit=self.f1, valstep=1, color=COLORS["wave1"])
@@ -70,6 +71,101 @@ class BeatSimulatorPro:
         
         for slider in [self.slider_f1, self.slider_f2, self.slider_amp, self.slider_damp]:
             slider.on_changed(self.update)
+        
+        # Text input boxes for direct value entry
+        tw, th = 0.08, 0.025
+        
+        # Freq 1 input
+        ax_text_f1 = plt.axes([0.72, 0.06, tw, th], facecolor=COLORS["bg_panel"])
+        self.text_f1 = TextBox(ax_text_f1, 'F1:', initial=str(int(self.f1)), color=COLORS["bg_panel"], 
+                               hovercolor=COLORS["bg_light"], label_pad=0.01)
+        self.text_f1.label.set_color(COLORS["text"])
+        self.text_f1.label.set_fontsize(9)
+        self.text_f1.label.set_fontweight('bold')
+        self.text_f1.on_submit(self.submit_f1)
+        
+        # Freq 2 input
+        ax_text_f2 = plt.axes([0.82, 0.06, tw, th], facecolor=COLORS["bg_panel"])
+        self.text_f2 = TextBox(ax_text_f2, 'F2:', initial=str(int(self.f2)), color=COLORS["bg_panel"],
+                               hovercolor=COLORS["bg_light"], label_pad=0.01)
+        self.text_f2.label.set_color(COLORS["text"])
+        self.text_f2.label.set_fontsize(9)
+        self.text_f2.label.set_fontweight('bold')
+        self.text_f2.on_submit(self.submit_f2)
+        
+        # Amplitude input
+        ax_text_amp = plt.axes([0.72, 0.025, tw, th], facecolor=COLORS["bg_panel"])
+        self.text_amp = TextBox(ax_text_amp, 'Amp:', initial=str(self.A), color=COLORS["bg_panel"],
+                                hovercolor=COLORS["bg_light"], label_pad=0.01)
+        self.text_amp.label.set_color(COLORS["text"])
+        self.text_amp.label.set_fontsize(9)
+        self.text_amp.label.set_fontweight('bold')
+        self.text_amp.on_submit(self.submit_amp)
+        
+        # Damping input
+        ax_text_damp = plt.axes([0.82, 0.025, tw, th], facecolor=COLORS["bg_panel"])
+        self.text_damp = TextBox(ax_text_damp, 'Damp:', initial=str(self.damping), color=COLORS["bg_panel"],
+                                 hovercolor=COLORS["bg_light"], label_pad=0.01)
+        self.text_damp.label.set_color(COLORS["text"])
+        self.text_damp.label.set_fontsize(9)
+        self.text_damp.label.set_fontweight('bold')
+        self.text_damp.on_submit(self.submit_damp)
+    
+    def submit_f1(self, text):
+        """Handle Freq 1 text input"""
+        try:
+            val = float(text)
+            if 100 <= val <= 500:
+                self.slider_f1.set_val(val)
+                print(f"✓ Freq 1 set to {val} Hz")
+            else:
+                print("⚠️  Freq 1 must be between 100-500 Hz")
+                self.text_f1.set_val(str(int(self.f1)))
+        except ValueError:
+            print("⚠️  Invalid number")
+            self.text_f1.set_val(str(int(self.f1)))
+    
+    def submit_f2(self, text):
+        """Handle Freq 2 text input"""
+        try:
+            val = float(text)
+            if 100 <= val <= 500:
+                self.slider_f2.set_val(val)
+                print(f"✓ Freq 2 set to {val} Hz")
+            else:
+                print("⚠️  Freq 2 must be between 100-500 Hz")
+                self.text_f2.set_val(str(int(self.f2)))
+        except ValueError:
+            print("⚠️  Invalid number")
+            self.text_f2.set_val(str(int(self.f2)))
+    
+    def submit_amp(self, text):
+        """Handle Amplitude text input"""
+        try:
+            val = float(text)
+            if 0.1 <= val <= 2.0:
+                self.slider_amp.set_val(val)
+                print(f"✓ Amplitude set to {val}")
+            else:
+                print("⚠️  Amplitude must be between 0.1-2.0")
+                self.text_amp.set_val(str(self.A))
+        except ValueError:
+            print("⚠️  Invalid number")
+            self.text_amp.set_val(str(self.A))
+    
+    def submit_damp(self, text):
+        """Handle Damping text input"""
+        try:
+            val = float(text)
+            if 0.0 <= val <= 5.0:
+                self.slider_damp.set_val(val)
+                print(f"✓ Damping set to {val}")
+            else:
+                print("⚠️  Damping must be between 0.0-5.0")
+                self.text_damp.set_val(str(self.damping))
+        except ValueError:
+            print("⚠️  Invalid number")
+            self.text_damp.set_val(str(self.damping))
         
     def create_preset_buttons(self):
         self.preset_buttons = []
@@ -89,12 +185,22 @@ class BeatSimulatorPro:
         self.slider_f2.set_val(params["f2"])
         self.slider_amp.set_val(params["A"])
         self.slider_damp.set_val(params["damping"])
+        # Update text boxes
+        self.text_f1.set_val(str(int(params["f1"])))
+        self.text_f2.set_val(str(int(params["f2"])))
+        self.text_amp.set_val(str(params["A"]))
+        self.text_damp.set_val(str(params["damping"]))
         print(f"✨ Applied: {name}")
         
     def on_key_press(self, event):
         if event.key == "r":
             for s, v in zip([self.slider_f1, self.slider_f2, self.slider_amp, self.slider_damp], [260, 250, 1.0, 0.0]):
                 s.set_val(v)
+            # Update text boxes
+            self.text_f1.set_val("260")
+            self.text_f2.set_val("250")
+            self.text_amp.set_val("1.0")
+            self.text_damp.set_val("0.0")
             print("🔄 Reset")
         elif event.key == "s":
             self.fig.savefig("beat_viz.png", dpi=300, facecolor=COLORS["bg_dark"])
@@ -243,6 +349,10 @@ class BeatSimulatorPro:
 ⌨️  Shortcuts:
   R-Reset | S-Save
   H-Help  | Q-Quit
+
+📝 Direct Input:
+  Type values in boxes
+  Press Enter to apply
 """
         self.ax_info.text(0.05, 0.95, info, transform=self.ax_info.transAxes, fontsize=9, verticalalignment="top",
                          fontfamily="monospace", color=COLORS["text"],
@@ -268,6 +378,7 @@ if __name__ == "__main__":
     print("🎵 ULTIMATE BEAT SIMULATOR - BEST UI EVER")
     print("="*70)
     print("\n✨ Features: 6 Presets | FFT | Lissajous | Spectrogram | Keyboard Shortcuts")
+    print("📝 Direct Input: Type custom values in text boxes (F1, F2, Amp, Damp)")
     print("⌨️  Shortcuts: R-Reset | S-Save (300 DPI) | H-Help | Q-Quit")
     print("="*70 + "\n")
     
